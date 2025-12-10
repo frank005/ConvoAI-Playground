@@ -388,4 +388,50 @@ window.AgoraAPI = class AgoraAPI {
             throw new Error(`Failed to delete phone number: ${error.message}`);
         }
     }
+
+    async importPipelineConfig(customerId, customerSecret, pipelineConfig) {
+        const headers = this.getAuthHeaders(customerId, customerSecret);
+        const url = `${this.baseUrl}/agent-pipeline`;
+
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers,
+                body: JSON.stringify(pipelineConfig)
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || response.statusText);
+            }
+            return await response.json();
+        } catch (error) {
+            throw new Error(`Failed to import pipeline config: ${error.message}`);
+        }
+    }
+
+    async deletePipelineConfig(customerId, customerSecret, pipelineId) {
+        const headers = this.getAuthHeaders(customerId, customerSecret);
+        const url = `${this.baseUrl}/agent-pipelines/${pipelineId}`;
+
+        try {
+            const response = await fetch(url, {
+                method: "DELETE",
+                headers
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || response.statusText);
+            }
+            // Handle empty response (204 No Content) or response with no body
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                const text = await response.text();
+                return text ? JSON.parse(text) : { success: true };
+            }
+            // Return success object for empty responses
+            return { success: true, message: "Pipeline deleted successfully" };
+        } catch (error) {
+            throw new Error(`Failed to delete pipeline config: ${error.message}`);
+        }
+    }
 } 
